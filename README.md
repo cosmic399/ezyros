@@ -4,7 +4,7 @@
 ## Install in one command
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/cosmic399/easyros2/main/install.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/cosmic399/easyros2/master/install.sh)
 ```
 
 ## Supported
