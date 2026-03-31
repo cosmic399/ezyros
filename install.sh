@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+VERSION="1.0.0"
+
 # ── COLORS ──────────────────────────────────
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -319,5 +321,5 @@ echo ""
 echo -e "  ${YELLOW}Next step: Close and reopen your terminal${NC}"
 echo -e "  Then verify with: ${BOLD}ros2 --version${NC}"
 echo ""
-echo -e "  Built by cosmic399 — EasyROS2 v1.0"
+echo -e "  Built by cosmic399 — EasyROS2 v${VERSION}"
 echo ""
