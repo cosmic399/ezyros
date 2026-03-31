@@ -265,19 +265,15 @@ sudo apt install -y \
 if [ "$UBUNTU_CODENAME" = "jammy" ]; then
   pip3 install setuptools==58.2.0 --quiet || \
     warn "setuptools pin failed — non critical"
-else
-  # Hard-remove user-local setuptools/pkg_resources that shadow the system copy
-  # pip3 uninstall alone doesn't clean pkg_resources on Python 3.12
-  rm -rf "$HOME/.local/lib/python3.12/site-packages/setuptools" \
-         "$HOME/.local/lib/python3.12/site-packages/setuptools-"* \
-         "$HOME/.local/lib/python3.12/site-packages/pkg_resources" 2>/dev/null || true
-  ok "Cleared stale user-local setuptools (Noble/Python 3.12)"
 fi
 
 # rosdep init (safe — won't fail if already done)
 sudo rosdep init 2>/dev/null || \
   warn "rosdep already initialized — skipping"
-rosdep update || fail "rosdep update failed."
+
+# PYTHONNOUSERSITE=1 prevents ~/.local packages from shadowing system
+# pkg_resources — fixes Python 3.12 ImpImporter crash on Noble
+PYTHONNOUSERSITE=1 rosdep update || fail "rosdep update failed."
 
 ok "Development tools ready"
 
