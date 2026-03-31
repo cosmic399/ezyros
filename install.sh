@@ -260,8 +260,15 @@ sudo apt install -y \
   python3-argcomplete || \
   fail "Dev tools install failed."
 
-pip3 install setuptools==58.2.0 --quiet || \
-  warn "setuptools pin failed — non critical"
+# Pin setuptools only on Ubuntu 22.04 (Jammy/Python 3.10)
+# On Ubuntu 24.04 (Noble/Python 3.12) setuptools==58.2.0 breaks rosdep
+if [ "$UBUNTU_CODENAME" = "jammy" ]; then
+  pip3 install setuptools==58.2.0 --quiet || \
+    warn "setuptools pin failed — non critical"
+else
+  # Remove any user-installed setuptools that could shadow the system one
+  pip3 uninstall setuptools -y --quiet 2>/dev/null || true
+fi
 
 # rosdep init (safe — won't fail if already done)
 sudo rosdep init 2>/dev/null || \
