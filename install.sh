@@ -266,8 +266,11 @@ if [ "$UBUNTU_CODENAME" = "jammy" ]; then
   pip3 install setuptools==58.2.0 --quiet || \
     warn "setuptools pin failed — non critical"
 else
-  # Remove any user-installed setuptools that could shadow the system one
-  pip3 uninstall setuptools -y --quiet 2>/dev/null || true
+  # Hard-remove user-local setuptools/pkg_resources that shadow the system copy
+  # pip3 uninstall alone doesn't clean pkg_resources on Python 3.12
+  rm -rf ~/.local/lib/python3.*/site-packages/setuptools* \
+         ~/.local/lib/python3.*/site-packages/pkg_resources* 2>/dev/null || true
+  ok "Cleared stale user-local setuptools (Noble/Python 3.12)"
 fi
 
 # rosdep init (safe — won't fail if already done)
