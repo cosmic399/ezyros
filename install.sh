@@ -268,8 +268,9 @@ if [ "$UBUNTU_CODENAME" = "jammy" ]; then
 else
   # Hard-remove user-local setuptools/pkg_resources that shadow the system copy
   # pip3 uninstall alone doesn't clean pkg_resources on Python 3.12
-  rm -rf ~/.local/lib/python3.*/site-packages/setuptools* \
-         ~/.local/lib/python3.*/site-packages/pkg_resources* 2>/dev/null || true
+  rm -rf "$HOME/.local/lib/python3.12/site-packages/setuptools" \
+         "$HOME/.local/lib/python3.12/site-packages/setuptools-"* \
+         "$HOME/.local/lib/python3.12/site-packages/pkg_resources" 2>/dev/null || true
   ok "Cleared stale user-local setuptools (Noble/Python 3.12)"
 fi
 
