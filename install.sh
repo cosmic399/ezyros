@@ -183,6 +183,15 @@ if [ -f /usr/share/keyrings/ros-archive-keyring.gpg ]; then
   ok "Old GPG key removed"
 fi
 
+# Clean stale user-local Python packages from any previous failed run
+# These shadow system pkg_resources and crash rosdep on Python 3.12
+if [ -d "$HOME/.local/lib" ]; then
+  find "$HOME/.local/lib" -maxdepth 3 \
+    \( -name "setuptools*" -o -name "pkg_resources*" \) \
+    -exec rm -rf {} + 2>/dev/null || true
+  ok "Cleared stale user-local Python packages"
+fi
+
 ok "Environment is clean"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
