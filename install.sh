@@ -112,6 +112,7 @@ ok "Internet connection verified"
 
 # Check: disk space (need at least 5GB free)
 FREE_KB=$(df / | tail -1 | awk '{print $4}')
+FREE_KB="${FREE_KB:-0}"
 FREE_GB=$((FREE_KB / 1024 / 1024))
 if [ "$FREE_GB" -lt 5 ]; then
   fail "Not enough disk space. Need 5GB free, have ${FREE_GB}GB."
@@ -119,16 +120,19 @@ fi
 ok "Disk space OK (${FREE_GB}GB free)"
 
 # Check: apt lock (wait up to 60s)
+# BUG FIX: guard fuser — not installed on all minimal Ubuntu images
 echo "  Checking apt lock..."
 WAIT=0
-while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-  if [ $WAIT -ge 60 ]; then
-    fail "apt is locked by another process. Try again after reboot."
-  fi
-  warn "apt is locked, waiting... (${WAIT}s)"
-  sleep 5
-  WAIT=$((WAIT + 5))
-done
+if command -v fuser &>/dev/null; then
+  while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+    if [ $WAIT -ge 60 ]; then
+      fail "apt is locked by another process. Try again after reboot."
+    fi
+    warn "apt is locked, waiting... (${WAIT}s)"
+    sleep 5
+    WAIT=$((WAIT + 5))
+  done
+fi
 ok "apt lock is free"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -147,23 +151,24 @@ echo "  Available distributions:"
 echo ""
 
 # Show only compatible distros based on Ubuntu version
+# BUG FIX: added -r flag to read — prevents backslash mangling user input
 if [ "$UBUNTU_CODENAME" = "jammy" ]; then
   echo "  1) ROS2 Humble  (Recommended — LTS until 2027)"
   echo "  2) ROS2 Iron    (Older — EOL but still used)"
   echo ""
-  read -p "  Enter choice [1-2]: " CHOICE
+  read -r -p "  Enter choice [1-2]: " CHOICE || fail "No input received."
   case $CHOICE in
     1) ROS_DISTRO="humble" ;;
     2) ROS_DISTRO="iron" ;;
-    *) fail "Invalid choice." ;;
+    *) fail "Invalid choice: '$CHOICE'" ;;
   esac
 elif [ "$UBUNTU_CODENAME" = "noble" ]; then
   echo "  1) ROS2 Jazzy   (Recommended — LTS until 2029)"
   echo ""
-  read -p "  Enter choice [1]: " CHOICE
+  read -r -p "  Enter choice [1]: " CHOICE || fail "No input received."
   case $CHOICE in
     1) ROS_DISTRO="jazzy" ;;
-    *) fail "Invalid choice." ;;
+    *) fail "Invalid choice: '$CHOICE'" ;;
   esac
 else
   fail "Unsupported Ubuntu version: $UBUNTU_CODENAME
@@ -197,17 +202,11 @@ fi
 
 step "Cleaning old ROS2 configurations"
 
-if [ -f /etc/apt/sources.list.d/ros2.list ]; then
-  warn "Found old ros2.list — removing..."
-  sudo rm -f /etc/apt/sources.list.d/ros2.list
-  ok "Old ros2.list removed"
-fi
-
-if [ -f /usr/share/keyrings/ros-archive-keyring.gpg ]; then
-  warn "Found old GPG key — removing..."
-  sudo rm -f /usr/share/keyrings/ros-archive-keyring.gpg
-  ok "Old GPG key removed"
-fi
+# BUG FIX: also remove ros2*.sources (new format from ros2-apt-source package)
+sudo rm -f /etc/apt/sources.list.d/ros2*.list \
+           /etc/apt/sources.list.d/ros2*.sources 2>/dev/null || true
+sudo rm -f /usr/share/keyrings/ros-archive-keyring.gpg 2>/dev/null || true
+ok "Old ROS2 repo configs cleared"
 
 # Clean stale user-local Python packages from any previous failed run
 # These shadow system pkg_resources and crash rosdep on Python 3.12
@@ -241,11 +240,14 @@ if [ -z "$ROS_APT_SOURCE_VERSION" ]; then
   fail "Could not fetch ros-apt-source version. Check internet."
 fi
 
+# BUG FIX: use $UBUNTU_CODENAME directly instead of subshell sourcing /etc/os-release
 curl -L -o /tmp/ros2-apt-source.deb \
-  "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb" || \
+  "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.${UBUNTU_CODENAME}_all.deb" || \
   fail "Could not download ros2-apt-source package"
 
-sudo dpkg -i /tmp/ros2-apt-source.deb || \
+# BUG FIX: dpkg -i can fail on unmet deps — run apt-get install -f to resolve
+sudo dpkg -i /tmp/ros2-apt-source.deb 2>&1 || \
+  sudo apt-get install -f -y || \
   fail "Could not install ros2-apt-source package"
 
 ok "ROS2 repository configured"
@@ -302,9 +304,8 @@ if [ "$UBUNTU_CODENAME" = "jammy" ]; then
     warn "setuptools pin failed — non critical"
 fi
 
-# rosdep init (safe — won't fail if already done)
-sudo rosdep init 2>/dev/null || \
-  warn "rosdep already initialized — skipping"
+# BUG FIX: don't suppress all rosdep init stderr — only the "already exists" message
+sudo rosdep init 2>&1 | grep -v "already exists" || true
 
 # PYTHONNOUSERSITE=1 prevents ~/.local packages from shadowing system
 # pkg_resources — fixes Python 3.12 ImpImporter crash on Noble
@@ -344,11 +345,20 @@ WS_SOURCE="source $WORKSPACE/install/setup.bash 2>/dev/null || true"
 COLCON_CD="source /usr/share/colcon_cd/function/colcon_cd.sh"
 COLCON_ARG="source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash"
 
-# Add to bashrc only if not already there
+# Add ROS source — always safe, file is guaranteed to exist (verified in step 5)
 grep -qxF "$ROS_SOURCE" "$BASHRC" || echo "$ROS_SOURCE" >> "$BASHRC"
+
+# Add workspace source — safe, has 2>/dev/null || true guard
 grep -qxF "$WS_SOURCE" "$BASHRC" || echo "$WS_SOURCE" >> "$BASHRC"
-grep -qxF "$COLCON_CD" "$BASHRC" || echo "$COLCON_CD" >> "$BASHRC"
-grep -qxF "$COLCON_ARG" "$BASHRC" || echo "$COLCON_ARG" >> "$BASHRC"
+
+# BUG FIX: only add colcon lines if the files actually exist on disk
+if [ -f /usr/share/colcon_cd/function/colcon_cd.sh ]; then
+  grep -qxF "$COLCON_CD" "$BASHRC" || echo "$COLCON_CD" >> "$BASHRC"
+fi
+
+if [ -f /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash ]; then
+  grep -qxF "$COLCON_ARG" "$BASHRC" || echo "$COLCON_ARG" >> "$BASHRC"
+fi
 
 ok "Shell environment configured"
 
