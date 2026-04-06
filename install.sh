@@ -166,9 +166,7 @@ if [ -n "$INSTALLED_DISTRO" ]; then
       "ros-${INSTALLED_DISTRO}-*" \
       ros-dev-tools \
       python3-colcon-common-extensions \
-      python3-rosdep \
-      python3-argcomplete \
-      software-properties-common 2>/dev/null || true
+      python3-rosdep 2>/dev/null || true
     sudo apt autoremove -y 2>/dev/null || true
     ok "ROS2 packages removed"
 
