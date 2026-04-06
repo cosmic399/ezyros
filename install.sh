@@ -308,7 +308,13 @@ sudo rosdep init 2>/dev/null || \
 
 # PYTHONNOUSERSITE=1 prevents ~/.local packages from shadowing system
 # pkg_resources — fixes Python 3.12 ImpImporter crash on Noble
-PYTHONNOUSERSITE=1 rosdep update || fail "rosdep update failed."
+PYTHONNOUSERSITE=1 rosdep update || true
+# rosdep update exits non-zero for EOL distro warnings even on success
+# verify by checking the cache was actually written
+if [ ! -d "$HOME/.ros/rosdep/sources.cache" ]; then
+  fail "rosdep update failed — cache not created."
+fi
+ok "rosdep database updated"
 
 ok "Development tools ready"
 
