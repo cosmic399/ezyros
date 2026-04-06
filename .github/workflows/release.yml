@@ -1,0 +1,48 @@
+name: Build & Release .deb
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set version from tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Make ezyros executable
+        run: chmod +x pkg/usr/local/bin/ezyros
+
+      - name: Update version in control file
+        run: sed -i "s/^Version:.*/Version: $VERSION/" pkg/DEBIAN/control
+
+      - name: Build .deb
+        run: |
+          dpkg-deb --build pkg ezyros_${VERSION}_all.deb
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ezyros_*.deb
+          body: |
+            ## EzyROS v${{ env.VERSION }}
+
+            ### Install via .deb
+            ```bash
+            curl -LO https://github.com/cosmic399/easyros2/releases/latest/download/ezyros_${{ env.VERSION }}_all.deb
+            sudo dpkg -i ezyros_${{ env.VERSION }}_all.deb
+            ezyros
+            ```
+
+            ### Or one-liner
+            ```bash
+            bash <(curl -sSL https://raw.githubusercontent.com/cosmic399/easyros2/master/install.sh)
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,11 @@
+Package: ezyros
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: all
+Depends: bash, curl, lsb-release
+Maintainer: cosmic399
+Description: Zero-friction ROS2 installer for Ubuntu
+ EzyROS auto-detects your Ubuntu version, selects the right
+ ROS2 distro, and handles all repos, keys, and configuration
+ in one command.

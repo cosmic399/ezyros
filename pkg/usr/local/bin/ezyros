@@ -1,0 +1,2 @@
+#!/bin/bash
+bash <(curl -sSL https://raw.githubusercontent.com/cosmic399/easyros2/master/install.sh)
