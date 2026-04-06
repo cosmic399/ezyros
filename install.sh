@@ -162,7 +162,13 @@ if [ -n "$INSTALLED_DISTRO" ]; then
     echo ""
 
     echo "  Removing ROS2 packages..."
-    sudo apt remove --purge -y "ros-${INSTALLED_DISTRO}-*" ros-dev-tools 2>/dev/null || true
+    sudo apt remove --purge -y \
+      "ros-${INSTALLED_DISTRO}-*" \
+      ros-dev-tools \
+      python3-colcon-common-extensions \
+      python3-rosdep \
+      python3-argcomplete \
+      software-properties-common 2>/dev/null || true
     sudo apt autoremove -y 2>/dev/null || true
     ok "ROS2 packages removed"
 
