@@ -58,4 +58,4 @@ If anything fails, check the log and re-run `bash install.sh`.
 
 ## Built by
 
-gcsr
+cosmic399
