@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x install.sh test/test_install.sh)",
+      "Bash(bash -n install.sh)",
+      "Bash(bash test/test_install.sh)",
+      "Bash(gh auth:*)",
+      "Bash(gh repo:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(wsl --status)",
+      "Bash(wsl --list --verbose)",
+      "Bash(gh api:*)",
+      "Bash(git merge:*)",
+      "Bash(curl -s https://raw.githubusercontent.com/cosmic399/easyros2/master/install.sh)",
+      "Bash(curl -s https://raw.githubusercontent.com/cosmic399/ezyros/master/install.sh)"
+    ]
+  }
+}

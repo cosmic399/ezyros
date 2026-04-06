@@ -1,5 +1,5 @@
 #!/bin/bash
-# EasyROS2 — Automated Test Suite
+# EzyROS — Automated Test Suite
 set -uo pipefail
 
 PASS=0
@@ -28,7 +28,7 @@ header() {
 
 echo ""
 echo -e "${CYAN}${BOLD}╔══════════════════════════════════════════╗"
-echo "║        EASYROS2 TEST SUITE               ║"
+echo "║        EZYROS TEST SUITE               ║"
 echo "╚══════════════════════════════════════════╝${NC}"
 echo ""
 

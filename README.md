@@ -1,10 +1,10 @@
-# EasyROS2
+# EzyROS
 > Zero-friction ROS2 installer for Ubuntu
 
 ## Install in one command
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/cosmic399/easyros2/master/install.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/cosmic399/ezyros/master/install.sh)
 ```
 
 ## Supported
@@ -22,7 +22,7 @@ bash <(curl -sSL https://raw.githubusercontent.com/cosmic399/easyros2/master/ins
 - Handles all GPG keys and repos
 - Sets up workspace automatically
 - Configures bashrc cleanly
-- Logs everything to `~/.easyros2/install.log`
+- Logs everything to `~/.ezyros/install.log`
 
 ## Requirements
 
@@ -51,11 +51,11 @@ colcon build
 All output is saved to:
 
 ```
-~/.easyros2/install.log
+~/.ezyros/install.log
 ```
 
 If anything fails, check the log and re-run `bash install.sh`.
 
 ## Built by
 
-cosmic399 — NIT Patna Mechatronics
+gcsr

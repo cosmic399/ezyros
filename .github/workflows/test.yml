@@ -1,4 +1,4 @@
-name: EasyROS2 CI
+name: EzyROS CI
 
 on:
   push:

@@ -48,7 +48,7 @@ echo -e "  ${YELLOW}Zero headaches. Just robotics.${NC}"
 echo ""
 
 # ── LOGGING ─────────────────────────────────
-LOG_DIR="$HOME/.easyros2"
+LOG_DIR="$HOME/.ezyros"
 LOG_FILE="$LOG_DIR/install.log"
 mkdir -p "$LOG_DIR"
 exec > >(tee -a "$LOG_FILE") 2>&1
@@ -186,7 +186,7 @@ if [ -n "$INSTALLED_DISTRO" ]; then
     ok "bashrc cleaned"
 
     echo "  Removing install logs..."
-    rm -rf "$HOME/.easyros2" 2>/dev/null || true
+    rm -rf "$HOME/.ezyros" 2>/dev/null || true
     ok "Logs removed"
 
     echo "  Cleaning stale Python packages..."
@@ -458,5 +458,5 @@ echo ""
 echo -e "  ${YELLOW}Next step: Close and reopen your terminal${NC}"
 echo -e "  Then verify with: ${BOLD}ros2 --version${NC}"
 echo ""
-echo -e "  Built by cosmic399 — EasyROS2 v${VERSION}"
+echo -e "  Built by gcsr — EzyROS v${VERSION}"
 echo ""
