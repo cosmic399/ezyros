@@ -136,6 +136,85 @@ fi
 ok "apt lock is free"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DETECT EXISTING INSTALL — REINSTALL OR UNINSTALL
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INSTALLED_DISTRO=""
+for dir in /opt/ros/*/; do
+  if [ -f "${dir}setup.bash" ]; then
+    INSTALLED_DISTRO=$(basename "$dir")
+    break
+  fi
+done
+
+if [ -n "$INSTALLED_DISTRO" ]; then
+  echo ""
+  echo -e "  ${YELLOW}${BOLD}ROS2 '${INSTALLED_DISTRO}' is already installed.${NC}"
+  echo ""
+  echo -e "  Press ${BOLD}Enter${NC} to reinstall"
+  echo -e "  Type  ${BOLD}uninstall${NC} to remove everything"
+  echo ""
+  read -r -p "  → Your choice: " ACTION || true
+
+  if [ "${ACTION,,}" = "uninstall" ]; then
+    echo ""
+    echo -e "${RED}${BOLD}━━━ UNINSTALLING ROS2 ${INSTALLED_DISTRO^^} ━━━${NC}"
+    echo ""
+
+    echo "  Removing ROS2 packages..."
+    sudo apt remove --purge -y "ros-${INSTALLED_DISTRO}-*" ros-dev-tools 2>/dev/null || true
+    sudo apt autoremove -y 2>/dev/null || true
+    ok "ROS2 packages removed"
+
+    echo "  Removing ROS2 apt repository..."
+    sudo rm -f /etc/apt/sources.list.d/ros2*.list \
+               /etc/apt/sources.list.d/ros2*.sources 2>/dev/null || true
+    sudo rm -f /usr/share/keyrings/ros-archive-keyring.gpg 2>/dev/null || true
+    sudo dpkg -r ros2-apt-source 2>/dev/null || true
+    sudo apt update -qq 2>/dev/null || true
+    ok "ROS2 repository removed"
+
+    echo "  Removing rosdep..."
+    sudo rm -rf /etc/ros/rosdep 2>/dev/null || true
+    ok "rosdep config removed"
+
+    echo "  Cleaning ~/.bashrc..."
+    sed -i "\|source /opt/ros/${INSTALLED_DISTRO}/setup.bash|d" "$HOME/.bashrc"
+    sed -i "\|source $HOME/ros2_ws/install/setup.bash|d" "$HOME/.bashrc"
+    sed -i '\|source /usr/share/colcon_cd/function/colcon_cd.sh|d' "$HOME/.bashrc"
+    sed -i '\|source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash|d' "$HOME/.bashrc"
+    ok "bashrc cleaned"
+
+    echo "  Removing install logs..."
+    rm -rf "$HOME/.easyros2" 2>/dev/null || true
+    ok "Logs removed"
+
+    echo "  Cleaning stale Python packages..."
+    find "$HOME/.local/lib" -maxdepth 3 \
+      \( -name "setuptools*" -o -name "pkg_resources*" \) \
+      -exec rm -rf {} + 2>/dev/null || true
+    ok "Python packages cleaned"
+
+    echo ""
+    echo -e "${GREEN}${BOLD}"
+    echo "╔══════════════════════════════════════════╗"
+    echo "║         UNINSTALL COMPLETE ✓             ║"
+    echo "╚══════════════════════════════════════════╝"
+    echo -e "${NC}"
+    echo -e "  ROS2 ${BOLD}${INSTALLED_DISTRO}${NC} has been fully removed."
+    echo ""
+    echo -e "  ${YELLOW}Workspace ${HOME}/ros2_ws was kept.${NC}"
+    echo -e "  To delete it too: ${BOLD}rm -rf ~/ros2_ws${NC}"
+    echo ""
+    echo -e "  To reinstall: ${BOLD}bash install.sh${NC}"
+    echo ""
+    exit 0
+  fi
+  echo ""
+  warn "Reinstalling ROS2 ${INSTALLED_DISTRO}..."
+fi
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # DISTRO SELECTION MENU
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
